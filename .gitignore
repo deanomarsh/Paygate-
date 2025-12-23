@@ -40,6 +40,7 @@ htmlcov/
 # Generated reports
 payment_gateway_report.json
 sample_transactions.json
+comprehensive_report.json
 report.json
 
 # OS
