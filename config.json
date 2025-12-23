@@ -1,0 +1,22 @@
+{
+  "fraud_threshold": 1000.0,
+  "velocity_check_minutes": 10,
+  "max_transactions_per_period": 5,
+  "suspicious_countries": ["XX", "YY", "ZZ"],
+  "log_level": "INFO",
+  "fraud_prevention_enabled": false,
+  "alert_email": "security@example.com",
+  "monitoring_enabled": true,
+  "data_retention_days": 90,
+  "encryption_required": true,
+  "pci_dss_mode": true,
+  "risk_thresholds": {
+    "low": 30,
+    "medium": 50,
+    "high": 70,
+    "critical": 90
+  },
+  "card_types_allowed": ["VISA", "MASTERCARD", "AMEX", "DISCOVER"],
+  "max_transaction_amount": 10000.0,
+  "min_transaction_amount": 0.01
+}
