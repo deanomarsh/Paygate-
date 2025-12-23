@@ -102,7 +102,7 @@ class FraudDetector:
         if "last_transaction_time" in transaction.metadata:
             try:
                 last_time = datetime.fromisoformat(transaction.metadata["last_transaction_time"])
-                time_diff = (transaction.timestamp - last_time).seconds
+                time_diff = (transaction.timestamp - last_time).total_seconds()
                 if time_diff < 60:  # Less than 1 minute
                     score += 0.3
                     factors.append("rapid_succession")

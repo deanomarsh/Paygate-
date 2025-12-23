@@ -13,7 +13,7 @@ from typing import Optional, Dict, List
 import logging
 from datetime import datetime
 
-from core import PaymentTransaction, PaymentStatus
+from core import PaymentTransaction, PaymentStatus, VulnerabilityLevel
 from payment_flow import PaymentFlowController
 from vulnerability_scanner import VulnerabilityScanner
 from bug_detector import AutomatedBugFixer
@@ -96,7 +96,7 @@ class PaymentGateway:
             vulnerabilities = self.vulnerability_scanner.scan_transaction(transaction)
             
             if vulnerabilities:
-                critical_vulns = [v for v in vulnerabilities if v.level.value == "critical"]
+                critical_vulns = [v for v in vulnerabilities if v.level == VulnerabilityLevel.CRITICAL]
                 if critical_vulns:
                     transaction.status = PaymentStatus.FLAGGED
                     self.monitoring_service.create_alert(

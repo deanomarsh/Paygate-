@@ -197,7 +197,8 @@ class TestAutomatedBugFixer:
         fixes = fixer.apply_fixes(transaction)
         
         assert fixes > 0
-        assert transaction.amount == 101.0  # Rounded
+        # round(100.999, 2) = 101.0
+        assert transaction.amount == 101.00
 
 
 class TestMonitoringService:

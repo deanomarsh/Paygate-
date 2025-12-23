@@ -14,7 +14,7 @@ EXPOSE 8000
 
 # Health check for zero downtime
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)"
+    CMD python -c "from gateway import PaymentGateway; g = PaymentGateway(); g.shutdown(); import sys; sys.exit(0)"
 
 # Run the application
 CMD ["python", "gateway.py"]

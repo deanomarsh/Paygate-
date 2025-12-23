@@ -42,7 +42,7 @@ class MonitoringService:
         if not self.monitoring_active:
             self.monitoring_active = True
             self.stop_event.clear()
-            self.monitoring_thread = Thread(target=self._monitoring_loop, daemon=True)
+            self.monitoring_thread = Thread(target=self._monitoring_loop, daemon=False)
             self.monitoring_thread.start()
             self.logger.info("24/7 monitoring started")
     
