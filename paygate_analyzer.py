@@ -80,6 +80,7 @@ class PaymentGatewayAnalyzer:
         self.logger = self._setup_logger()
         self.transactions: List[Transaction] = []
         self.vulnerabilities: List[SecurityVulnerability] = []
+        self._cached_flagged: Optional[List[Transaction]] = None
         
     def _default_config(self) -> Dict[str, Any]:
         """Return default configuration"""
@@ -88,7 +89,15 @@ class PaymentGatewayAnalyzer:
             'velocity_check_minutes': 10,
             'max_transactions_per_period': 5,
             'suspicious_countries': ['XX', 'YY'],
-            'log_level': 'INFO'
+            'log_level': 'INFO',
+            'fraud_ratio_weight': 30,
+            'vuln_weight_low': 5,
+            'vuln_weight_medium': 15,
+            'vuln_weight_high': 30,
+            'vuln_weight_critical': 50,
+            'risk_threshold_high': 70,
+            'risk_threshold_medium': 50,
+            'risk_threshold_low': 30
         }
     
     def _setup_logger(self) -> logging.Logger:
@@ -115,6 +124,7 @@ class PaymentGatewayAnalyzer:
             transaction: Transaction object to analyze
         """
         self.transactions.append(transaction)
+        self._cached_flagged = None  # Invalidate cache
         self.logger.info(f"Added transaction {transaction.transaction_id}")
     
     def analyze_fraud_patterns(self) -> List[Transaction]:
@@ -124,6 +134,10 @@ class PaymentGatewayAnalyzer:
         Returns:
             List of flagged transactions
         """
+        # Return cached result if available
+        if self._cached_flagged is not None:
+            return self._cached_flagged
+            
         flagged = []
         threshold = self.config['fraud_threshold']
         suspicious_countries = self.config['suspicious_countries']
@@ -145,6 +159,8 @@ class PaymentGatewayAnalyzer:
                 )
                 flagged.append(txn)
         
+        # Cache the result
+        self._cached_flagged = flagged
         return flagged
     
     def check_velocity_patterns(self) -> Dict[str, List[Transaction]]:
@@ -184,18 +200,21 @@ class PaymentGatewayAnalyzer:
         """
         vulnerabilities = []
         
-        # Check for unencrypted transactions (simplified check)
-        unencrypted_count = 0
+        # Check for transactions without secure protocol indicators
+        # In a real system, this would check if transactions use HTTPS/TLS
+        unsecure_count = 0
         for txn in self.transactions:
-            # In a real system, check actual encryption
-            if not txn.ip_address.startswith('https'):
-                unencrypted_count += 1
+            # Check if IP address suggests insecure connection
+            # Real implementation would check actual encryption status
+            if not any(indicator in txn.ip_address.lower() 
+                      for indicator in ['secure', 'tls', 'ssl']):
+                unsecure_count += 1
         
-        if unencrypted_count > 0:
+        if unsecure_count > 0:
             vuln = SecurityVulnerability(
                 vulnerability_id="VULN-001",
-                title="Unencrypted Transaction Detection",
-                description=f"Detected {unencrypted_count} potentially unencrypted transactions",
+                title="Potential Unencrypted Transactions",
+                description=f"Detected {unsecure_count} transactions without secure protocol indicators",
                 risk_level=RiskLevel.HIGH,
                 affected_component="Transaction Layer",
                 recommendation="Enforce TLS/SSL encryption for all transactions",
@@ -218,18 +237,19 @@ class PaymentGatewayAnalyzer:
             vulnerabilities.append(vuln)
             self.vulnerabilities.append(vuln)
         
-        # Check for PCI-DSS compliance indicators
-        vuln = SecurityVulnerability(
-            vulnerability_id="VULN-003",
-            title="PCI-DSS Compliance Check Required",
-            description="Regular PCI-DSS compliance validation recommended",
-            risk_level=RiskLevel.MEDIUM,
-            affected_component="Compliance",
-            recommendation="Schedule regular PCI-DSS compliance audits",
-            detected_at=datetime.now().isoformat()
-        )
-        vulnerabilities.append(vuln)
-        self.vulnerabilities.append(vuln)
+        # Check for PCI-DSS compliance only if enabled and transactions exist
+        if len(self.transactions) > 0 and self.config.get('pci_dss_mode', False):
+            vuln = SecurityVulnerability(
+                vulnerability_id="VULN-003",
+                title="PCI-DSS Compliance Check Required",
+                description="Regular PCI-DSS compliance validation recommended",
+                risk_level=RiskLevel.MEDIUM,
+                affected_component="Compliance",
+                recommendation="Schedule regular PCI-DSS compliance audits",
+                detected_at=datetime.now().isoformat()
+            )
+            vulnerabilities.append(vuln)
+            self.vulnerabilities.append(vuln)
         
         return vulnerabilities
     
@@ -245,14 +265,15 @@ class PaymentGatewayAnalyzer:
         # Factor in flagged transactions
         if len(self.transactions) > 0:
             fraud_ratio = len(self.analyze_fraud_patterns()) / len(self.transactions)
-            score += fraud_ratio * 30
+            fraud_weight = self.config.get('fraud_ratio_weight', 30)
+            score += fraud_ratio * fraud_weight
         
         # Factor in vulnerabilities
         vuln_weights = {
-            RiskLevel.LOW: 5,
-            RiskLevel.MEDIUM: 15,
-            RiskLevel.HIGH: 30,
-            RiskLevel.CRITICAL: 50
+            RiskLevel.LOW: self.config.get('vuln_weight_low', 5),
+            RiskLevel.MEDIUM: self.config.get('vuln_weight_medium', 15),
+            RiskLevel.HIGH: self.config.get('vuln_weight_high', 30),
+            RiskLevel.CRITICAL: self.config.get('vuln_weight_critical', 50)
         }
         
         for vuln in self.vulnerabilities:
@@ -288,12 +309,16 @@ class PaymentGatewayAnalyzer:
                          vulnerabilities: List[SecurityVulnerability],
                          risk_score: float) -> str:
         """Generate summary text for the report"""
+        risk_threshold_high = self.config.get('risk_threshold_high', 70)
+        risk_threshold_medium = self.config.get('risk_threshold_medium', 50)
+        risk_threshold_low = self.config.get('risk_threshold_low', 30)
+        
         risk_level = "LOW"
-        if risk_score > 70:
+        if risk_score > risk_threshold_high:
             risk_level = "CRITICAL"
-        elif risk_score > 50:
+        elif risk_score > risk_threshold_medium:
             risk_level = "HIGH"
-        elif risk_score > 30:
+        elif risk_score > risk_threshold_low:
             risk_level = "MEDIUM"
         
         summary = (

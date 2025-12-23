@@ -10,12 +10,14 @@
   "data_retention_days": 90,
   "encryption_required": true,
   "pci_dss_mode": true,
-  "risk_thresholds": {
-    "low": 30,
-    "medium": 50,
-    "high": 70,
-    "critical": 90
-  },
+  "fraud_ratio_weight": 30,
+  "vuln_weight_low": 5,
+  "vuln_weight_medium": 15,
+  "vuln_weight_high": 30,
+  "vuln_weight_critical": 50,
+  "risk_threshold_low": 30,
+  "risk_threshold_medium": 50,
+  "risk_threshold_high": 70,
   "card_types_allowed": ["VISA", "MASTERCARD", "AMEX", "DISCOVER"],
   "max_transaction_amount": 10000.0,
   "min_transaction_amount": 0.01
