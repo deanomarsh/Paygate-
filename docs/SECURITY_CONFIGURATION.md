@@ -80,7 +80,7 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
 # Content Security Policy
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
 
 # SSL Configuration
 ssl_protocols TLSv1.2 TLSv1.3;
