@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  paygate:
+    build: .
+    container_name: paygate-system
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - MONITORING_ENABLED=true
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - paygate-network
+
+  # Optional: Add a database service
+  # database:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: paygate
+  #     POSTGRES_USER: paygate
+  #     POSTGRES_PASSWORD: changeme
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - paygate-network
+
+networks:
+  paygate-network:
+    driver: bridge
+
+# volumes:
+#   postgres_data:

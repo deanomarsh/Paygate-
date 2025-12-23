@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
+COPY *.py ./
+
+# Expose port for API (if needed)
+EXPOSE 8000
+
+# Health check for zero downtime
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "from gateway import PaymentGateway; g = PaymentGateway(); g.shutdown(); import sys; sys.exit(0)"
+
+# Run the application
+CMD ["python", "gateway.py"]
