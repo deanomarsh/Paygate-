@@ -244,21 +244,46 @@ function displayResults(results, firstName, lastName) {
 function showClaimInstructions(recordId) {
     const record = unclaimedMoneyDatabase.find(r => r.id === recordId);
     
-    alert(`To claim this money:\n\n` +
-          `1. Contact the ${record.company} directly\n` +
-          `2. Provide proof of identity (driver's license, passport)\n` +
-          `3. Provide proof of address\n` +
-          `4. Complete the state's unclaimed property claim form\n` +
-          `5. Submit your claim to your state's unclaimed property office\n\n` +
-          `For ${record.state}, visit your state treasury website or call their unclaimed property division.\n\n` +
-          `This is a FREE service - never pay anyone to help you claim your money!`);
+    const instructionsHTML = `
+        <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 1.5rem; margin-top: 1rem; border-radius: 4px;">
+            <h4 style="color: #667eea; margin-bottom: 1rem;">How to Claim This Money</h4>
+            <ol style="margin-left: 1.5rem; line-height: 1.8;">
+                <li>Contact the <strong>${record.company}</strong> directly</li>
+                <li>Provide proof of identity (driver's license, passport)</li>
+                <li>Provide proof of address (utility bill, bank statement)</li>
+                <li>Complete the state's unclaimed property claim form</li>
+                <li>Submit your claim to your state's unclaimed property office</li>
+            </ol>
+            <p style="margin-top: 1rem;"><strong>For ${record.state}:</strong> Visit your state treasury website or call their unclaimed property division.</p>
+            <p style="background-color: #d4edda; padding: 0.75rem; border-radius: 4px; margin-top: 1rem; color: #155724;"><strong>⚠️ Important:</strong> This is a FREE service - never pay anyone to help you claim your money!</p>
+        </div>
+    `;
+    
+    // Find the button that was clicked and insert instructions after its parent card
+    const button = event.target;
+    const card = button.closest('.result-card');
+    
+    // Check if instructions are already shown
+    const existingInstructions = card.querySelector('.claim-instructions');
+    if (existingInstructions) {
+        existingInstructions.remove();
+        button.textContent = 'How to Claim This Money';
+    } else {
+        const instructionsDiv = document.createElement('div');
+        instructionsDiv.className = 'claim-instructions';
+        instructionsDiv.innerHTML = instructionsHTML;
+        card.appendChild(instructionsDiv);
+        button.textContent = 'Hide Instructions';
+    }
 }
 
 // Form validation
 document.getElementById('zipCode').addEventListener('input', function(e) {
     const value = e.target.value;
-    if (value && !/^\d{0,5}$/.test(value)) {
-        e.target.value = value.slice(0, -1);
+    // Filter out non-numeric characters and limit to 5 digits
+    const numericValue = value.replace(/\D/g, '').slice(0, 5);
+    if (value !== numericValue) {
+        e.target.value = numericValue;
     }
 });
 
