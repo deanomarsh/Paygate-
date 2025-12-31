@@ -298,6 +298,76 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+// Voice input functionality
+let recognition = null;
+let currentRecognitionButton = null;
+
+// Check if browser supports speech recognition
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        const targetInput = document.getElementById(currentRecognitionButton.dataset.target);
+        if (targetInput) {
+            targetInput.value = transcript;
+        }
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        if (currentRecognitionButton) {
+            currentRecognitionButton.classList.remove('listening');
+        }
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            alert('Microphone access is required for voice input. Please allow microphone access in your browser settings.');
+        }
+    };
+
+    recognition.onend = function() {
+        if (currentRecognitionButton) {
+            currentRecognitionButton.classList.remove('listening');
+        }
+    };
+
+    // Add click handlers to all mic buttons
+    document.querySelectorAll('.mic-button').forEach(button => {
+        button.addEventListener('click', function() {
+            // Stop any ongoing recognition
+            if (currentRecognitionButton && currentRecognitionButton !== this) {
+                currentRecognitionButton.classList.remove('listening');
+                recognition.stop();
+            }
+
+            currentRecognitionButton = this;
+            
+            // Toggle listening state
+            if (this.classList.contains('listening')) {
+                this.classList.remove('listening');
+                recognition.stop();
+            } else {
+                this.classList.add('listening');
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Failed to start speech recognition:', error);
+                    this.classList.remove('listening');
+                }
+            }
+        });
+    });
+} else {
+    // Hide mic buttons if not supported
+    document.querySelectorAll('.mic-button').forEach(button => {
+        button.style.display = 'none';
+    });
+    console.log('Speech recognition not supported in this browser');
+}
+
 // Initialize page
 console.log('Unclaimed Money Finder initialized');
 console.log(`Database contains ${unclaimedMoneyDatabase.length} records`);
