@@ -323,8 +323,31 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         if (currentRecognitionButton) {
             currentRecognitionButton.classList.remove('listening');
         }
+        
+        // Show user-friendly error message based on error type
+        let errorMessage = '';
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-            alert('Microphone access is required for voice input. Please allow microphone access in your browser settings.');
+            errorMessage = 'Microphone access is required for voice input. Please allow microphone access in your browser settings.';
+        } else if (event.error === 'no-speech') {
+            errorMessage = 'No speech detected. Please try again.';
+        } else if (event.error === 'network') {
+            errorMessage = 'Network error occurred. Please check your connection.';
+        } else if (event.error === 'aborted') {
+            // User cancelled, no need for message
+            return;
+        }
+        
+        if (errorMessage) {
+            // Show error inline instead of alert
+            const targetInput = document.getElementById(currentRecognitionButton.dataset.target);
+            if (targetInput) {
+                targetInput.placeholder = errorMessage;
+                targetInput.style.borderColor = '#e74c3c';
+                setTimeout(() => {
+                    targetInput.placeholder = '';
+                    targetInput.style.borderColor = '';
+                }, 3000);
+            }
         }
     };
 
@@ -340,7 +363,11 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             // Stop any ongoing recognition
             if (currentRecognitionButton && currentRecognitionButton !== this) {
                 currentRecognitionButton.classList.remove('listening');
-                recognition.stop();
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignore stop errors
+                }
             }
 
             currentRecognitionButton = this;
@@ -348,7 +375,11 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             // Toggle listening state
             if (this.classList.contains('listening')) {
                 this.classList.remove('listening');
-                recognition.stop();
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignore stop errors
+                }
             } else {
                 this.classList.add('listening');
                 try {
@@ -356,6 +387,16 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 } catch (error) {
                     console.error('Failed to start speech recognition:', error);
                     this.classList.remove('listening');
+                    // Show error feedback to user
+                    const targetInput = document.getElementById(this.dataset.target);
+                    if (targetInput) {
+                        targetInput.placeholder = 'Voice input unavailable';
+                        targetInput.style.borderColor = '#e74c3c';
+                        setTimeout(() => {
+                            targetInput.placeholder = '';
+                            targetInput.style.borderColor = '';
+                        }, 3000);
+                    }
                 }
             }
         });
